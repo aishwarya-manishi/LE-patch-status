@@ -1,0 +1,195 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+	<title>LE GFX Patch Status</title>
+	<style>
+		body {
+			font-family: Arial, sans-serif;
+			margin: 0;
+			padding: 0;
+			background-color: #f5f5f5;
+		}
+
+		h1 {
+			text-align: center;
+			padding: 20px 0;
+			margin: 0;
+			background-color: #4CAF50;
+			color: #fff;
+		}
+
+		table {
+			border: 1px solid #ccc;
+			border-collapse: collapse;
+			margin: 20px auto;
+			background-color: #fff;
+		}
+
+		th {
+			border: 2px solid #575555;
+			padding: 10px;
+			text-align: left;
+			background-color: #d1c8c8;
+			font-family: Verdana, Geneva, Tahoma, sans-serif
+		}
+
+		td {
+			border: 2px solid #575555;
+			padding: 10px;
+			text-align: left;
+		}
+
+		tr:hover {
+			background-color: #bebebe;
+		}
+
+		select {
+			display: block;
+			padding: 10px;
+			margin: 20px auto;
+			font-size: 16px;
+			border: none;
+			border-radius: 4px;
+			box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+			background-color: #fff;
+		}
+
+		.count {
+			margin-left: 5px;
+			font-style: italic;
+			color: #888;
+		}
+
+		.sumar {
+			font-family: Arial, sans-serif;
+			font-size: large;
+			text-align: left;
+			color: darkblue;
+			;
+		}
+
+		.status-filter {
+			display: flex;
+			flex-direction: row;
+			align-items: center;
+			justify-content: center;
+		}
+
+		.select-filter {
+			margin: 10px 10px 0 0;
+		}
+
+		#unique-status-count {
+			margin: 20px auto;
+			width: 50%;
+			padding: 10px;
+			background-color: #fff;
+			box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+			text-align: center;
+			font-size: 16px;
+		}
+
+		.status-UPSTREAM\: {
+			background-color: lightgreen;
+		}
+
+		.status-NOT_OPENSOURCED\: {
+			background-color: #FFCCCB;
+		}
+
+		.status-MAINT_GIT\: {
+			background-color: lightblue;
+		}
+	</style>
+</head>
+
+<body>
+	<h1>LE GFX Patch Status</h1>
+	<div id="unique-status-count">
+	</div>
+	<div class="status-filter">
+		<label class="sumar">Filter by Status: </label>
+		<select class="select-filter" id="status-filter">
+			<option value="">All</option>
+		</select>
+	</div>
+	<div class="status-filter">
+
+		<table id="data-table">
+			<thead>
+				<tr>
+					<th>Status</th>
+					<th>Commit ID</th>
+					<th>Commit Message</th>
+				</tr>
+			</thead>
+			<tbody></tbody>
+		</table>
+	</div>
+	<script>
+
+		fetch('patch.csv')
+			.then(response => {
+				// Get the file's creation date and time from the response headers
+				const createdDate = new Date(response.headers.get('Last-Modified'));
+
+				// Print the date and time
+				console.log('File created on: ' + createdDate);
+				const createdDateHtml = `<p>File created on: ${createdDate}</p>`;
+				const uniqueStatusCount = document.querySelector('#unique-status-count');
+				uniqueStatusCount.innerHTML = createdDateHtml;
+				// Continue with processing the response
+				return response.text();
+			})
+			.then(data => {
+				const rows = data.split('\n').slice(1);
+				const total_count = rows.length;
+				const tbody = document.querySelector('#data-table tbody');
+				const statusFilter = document.querySelector('#status-filter');
+				const uniqueStatusValues = new Set(rows.map(row => row.split(',')[0]));
+				const uniqueStatusCount = document.querySelector('#unique-status-count');
+				let countHtml = `<table> <label class="sumar"> Open Source Status Summary <label>`;
+				uniqueStatusValues.forEach(statusValue => {
+					const count = rows.filter(row => row.split(',')[0] === statusValue).length;
+					countHtml += ` <tr> <td>`
+					countHtml += `${statusValue}: </td> <td class="count"> ${count} </td> `;
+					const option = document.createElement('option');
+					option.value = statusValue;
+					option.textContent = statusValue;
+					statusFilter.appendChild(option);
+
+				});
+				countHtml += `<td>Total patches: </td><td class="count"> ${total_count} </td> </tr></table>`
+				uniqueStatusCount.innerHTML = countHtml;
+				rows.forEach(row => {
+					const cells = row.split(',');
+					const tr = document.createElement('tr');
+					tr.className = 'status-' + cells[0]; // add class based on status value
+					tr.innerHTML = `
+		        <td>${cells[0]}</td>
+		        <td>${cells[1]}</td>
+		        <td>${cells[2]}</td>
+		      `;
+					tbody.appendChild(tr);
+				});
+			});
+
+		// Add event listener to filter table rows
+		const statusFilter = document.querySelector('#status-filter');
+		statusFilter.addEventListener('change', (event) => {
+			const selectedStatus = event.target.value;
+			const rows = document.querySelectorAll('#data-table tbody tr');
+			rows.forEach(row => {
+				const statusCell = row.querySelector('td:first-child');
+				if (selectedStatus && statusCell.textContent !== selectedStatus) {
+					row.style.display = 'none';
+				} else {
+					row.style.display = '';
+				}
+			});
+		});
+	</script>
+</body>
+
+</html>

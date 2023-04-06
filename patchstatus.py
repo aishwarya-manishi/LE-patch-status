@@ -5,7 +5,7 @@ import git
 
 # Set the repository URL and branch
 repo_url = "https://github.com/intel-innersource/os.linux.bigbang.kernel-mtl.git"
-branch_name = "6.0.2-stage"
+branch_name = "6.2.7-stage"
 
 # define output function
 output_file = "../patchstatus.txt"
@@ -18,7 +18,7 @@ def f_out(line):
 
 # Check if the repository exists
 try:
-    repo = git.Repo("../6.0.2-stage/")
+    repo = git.Repo("../6.2.7-stage/")
     if not repo.bare:
         print("Repository already exists.")
 except git.exc.InvalidGitRepositoryError:
@@ -27,7 +27,7 @@ except git.exc.InvalidGitRepositoryError:
 
     # Add two remote repositories
     lkml_url = (
-        "https://kernel.googlesource.com/pub/scm/linux/kernel/git/stable/linux.git"
+        "https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git"
     )
     drmtip_url = "https://anongit.freedesktop.org/git/drm-tip.git"
 
@@ -133,6 +133,7 @@ writer = pd.ExcelWriter(
 )
 
 # write the DataFrame to the Excel sheet
+df.to_csv("/var/www/html/patchstatus/patch.csv")
 df.to_excel(writer, sheet_name="Commit Data", index=False)
 
 # format the columns in the Excel sheet
